@@ -45,7 +45,35 @@ import { delay } from "rxjs";
       />
     </label>
 
-    <button class="btn btn-primary mt-4" (click)="items.reload()">Recarregar</button>
+    <button class="btn btn-primary mt-4" (click)="items.reload()">
+      Recarregar Resource
+    </button>
+
+    <br />
+
+    <div class="join  mt-4">
+      <input
+        class="input input-bordered join-item"
+        placeholder="Título do item"
+        #title
+      />
+      <input
+        class="input input-bordered join-item"
+        placeholder="Preço"
+        #price
+      />
+      <button
+        class="btn join-item rounded-r-full"
+        (click)="addItem(title.value, price.value)"
+      >
+        Adicionar
+      </button>
+    </div>
+
+    <div class="mt-4">
+      <div>Resource Status</div>
+      <div> Status: {{ items.status() }} </div>
+    </div>
 
     <div class="overflow-x-auto mt-4">
       <table class="table">
@@ -57,15 +85,14 @@ import { delay } from "rxjs";
           </tr>
         </thead>
         <tbody>
-          <!-- row 1 -->
-          @for (item of items.value(); track item.id) {
-          <tr class="hover">
-            <td>{{ item.title }}</td>
-            <td>{{ item.price | currency : "BRL" }}</td>
-          </tr>
-          }
-
-          @if (items.isLoading()) {
+          @if (!items.isLoading()) {
+            @for (item of items.value(); track item.id) {
+              <tr class="hover">
+                <td>{{ item.title }}</td>
+                <td>{{ item.price | currency: "BRL" }}</td>
+              </tr>
+            }
+          } @else {
             <tr>
               <td colspan="2">Carregando...</td>
             </tr>
@@ -84,6 +111,19 @@ export class AppComponent {
 
   // items = this.resourceWithPromise();
   items = this.resourceWithObservable();
+
+  addItem(title: string, price: string) {
+    this.items.update((items) => {
+      return [
+        ...items,
+        {
+          id: items.length + 1,
+          title: title,
+          price: Number(price),
+        },
+      ];
+    });
+  }
 
   private resourceWithPromise() {
     return resource({
@@ -134,12 +174,9 @@ export class AppComponent {
           params.append("_sort", "-price");
         }
 
-        return this.httpClient.get<any>(
-          `http://localhost:3000/items?${params.toString()}`
-        )
-        .pipe(
-          delay(2000)
-        )
+        return this.httpClient
+          .get<any>(`http://localhost:3000/items?${params.toString()}`)
+          .pipe(delay(2000));
       },
     });
   }
